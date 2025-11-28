@@ -375,6 +375,24 @@
             animation: pulse 1.2s infinite, glow-gold 1.5s infinite alternate;
         }
         
+        .box.crb-suggestion {
+            border: 3px solid #9b59b6;
+            box-shadow: 0 0 20px #9b59b6;
+            position: relative;
+        }
+        
+        .box.crb-suggestion::before {
+            content: '\f0eb';
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            color: #9b59b6;
+            font-size: 0.8rem;
+            z-index: 4;
+        }
+        
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -452,6 +470,17 @@
         
         .btn-danger:hover {
             background: linear-gradient(145deg, #c0392b, var(--accent-color));
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-purple {
+            background: linear-gradient(145deg, #9b59b6, #8e44ad);
+            color: white;
+        }
+        
+        .btn-purple:hover {
+            background: linear-gradient(145deg, #8e44ad, #9b59b6);
             transform: translateY(-3px);
             box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
         }
@@ -650,6 +679,83 @@
             font-size: 0.9rem;
         }
         
+        .user-panel {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .user-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .user-action-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--light-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .user-action-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+        }
+        
+        .crb-info {
+            background: rgba(155, 89, 182, 0.3);
+            padding: 10px 15px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            border-left: 4px solid #9b59b6;
+        }
+        
+        .tabs {
+            display: flex;
+            background: rgba(26, 26, 46, 0.7);
+            border-radius: 10px;
+            padding: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 12px 20px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .tab.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+            background: rgba(26, 26, 46, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
         @media (max-width: 768px) {
             .boxes-container {
                 grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
@@ -688,6 +794,11 @@
             .info-item:not(:last-child)::after {
                 display: none;
             }
+            
+            .user-panel {
+                flex-direction: column;
+                gap: 10px;
+            }
         }
     </style>
 </head>
@@ -696,9 +807,8 @@
         <header>
             <h1><i class="fas fa-bolt"></i> BOX BLAST</h1>
             <p class="header-subtitle">Tembak box untuk mendapatkan hadiah uang tunai!</p>
-        </header>
-        
-        <div class="top-controls">
+            
+            <div class="top-controls">
             <div class="balance-container">
                 <i class="fas fa-wallet balance-icon"></i>
                 <div>
@@ -706,72 +816,133 @@
                     <div class="info-value balance" id="balance">Rp 0</div>
                 </div>
             </div>
-            <div class="menu-buttons">
-                <button class="btn-warning" id="settings-btn">
-                    <i class="fas fa-cog"></i> Pengaturan
+        </header>
+        
+        
+
+                    
+                <div class="crb-info" id="crb-info" style="display: none;">
+                    <i class="fas fa-lightbulb"></i>
+                    <span id="crb-text">CRB: 1 tersisa</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tabs">
+    <div class="tab active" data-tab="game">
+        <i class="fa-solid fa-gamepad"></i>
+    </div>
+    
+    <div class="tab" data-tab="topup">
+        <i class="fa-solid fa-wallet"></i>        
+    </div>
+    
+    <div class="tab" data-tab="settings">
+        <i class="fa-solid fa-gear"></i>
+    </div>
+</div>
+        
+        <div class="tab-content active" id="game-tab">
+            <div class="game-info">
+                <div class="info-item">
+                    <div class="info-label"><i class="fas fa-trophy"></i> LEVEL</div>
+                    <div class="info-value level" id="current-level">1</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label"><i class="fas fa-coins"></i> TARUHAN</div>
+                    <div class="info-value bet" id="current-bet">Rp 0</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label"><i class="fas fa-gift"></i> HADIAH LEVEL INI</div>
+                    <div class="info-value" id="current-prize">Rp 0</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label"><i class="fas fa-star"></i> STATUS</div>
+                    <div class="info-value" id="game-status">Belum Mulai</div>
+                </div>
+            </div>
+            
+            <div class="level-progress">
+                <div class="level-progress-bar" id="level-progress-bar"></div>
+            </div>
+            
+            <div class="level-indicator" id="level-indicator">
+                <!-- Level dots will be generated by JavaScript -->
+            </div>
+            
+            <div class="timer-container">
+                <div class="timer normal" id="timer">
+                    <i class="fas fa-clock"></i>
+                    <span id="timer-text">01:00</span>
+                </div>
+            </div>
+            
+            <div class="selection-info" id="selection-info" style="display: none;">
+                <i class="fas fa-info-circle"></i> <span id="selection-message">Klik box untuk memilih, klik lagi untuk deal</span>
+            </div>
+            
+            <div class="boxes-container" id="boxes-container">
+                <!-- Boxes will be generated by JavaScript -->
+            </div>
+            
+            <div class="controls">
+                <button class="btn-primary" id="start-game">
+                    <i class="fas fa-play"></i> Mulai Permainan
                 </button>
-                <button class="btn-success" id="topup-btn">
-                    <i class="fas fa-plus-circle"></i> Top Up Saldo
+                <button class="btn-purple" id="crb-btn" style="display: none;">
+                    <i class="fas fa-lightbulb"></i> Gunakan CRB
+                </button>
+                <button class="btn-success" id="next-level-btn" style="display: none;">
+                    <i class="fas fa-arrow-right"></i> Lanjut Level Berikutnya
+                </button>
+                <button class="btn-danger" id="cashout-btn" style="display: none;">
+                    <i class="fas fa-money-bill-wave"></i> Cashout
+                </button>
+            </div>
+            
+            <div class="cashout-info" id="cashout-info" style="display: none;">
+                <i class="fas fa-info-circle"></i> Dari Level 7, Anda dapat melakukan cashout untuk mengambil hadiah level ini.
+            </div>
+        </div>
+        
+        <div class="tab-content" id="settings-tab">
+            <div class="input-group">
+                <label for="sound-toggle"><i class="fas fa-volume-up"></i> Suara:</label>
+                <select id="sound-toggle">
+                    <option value="on">Hidup</option>
+                    <option value="off">Mati</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="animation-toggle"><i class="fas fa-film"></i> Animasi:</label>
+                <select id="animation-toggle">
+                    <option value="on">Hidup</option>
+                    <option value="off">Mati</option>
+                </select>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-primary" id="save-settings">
+                    <i class="fas fa-save"></i> Simpan Pengaturan
                 </button>
             </div>
         </div>
         
-        <div class="game-info">
-            <div class="info-item">
-                <div class="info-label"><i class="fas fa-trophy"></i> LEVEL</div>
-                <div class="info-value level" id="current-level">1</div>
+        <div class="tab-content" id="topup-tab">
+            <p>Pilih jumlah saldo yang ingin ditambahkan (simulasi).</p>
+            <div class="input-group">
+                <label for="topup-amount"><i class="fas fa-money-bill-wave"></i> Jumlah Top Up:</label>
+                <input type="number" 
+       id="topup-amount"
+       min="50000" 
+       max="1000000" 
+       step="50000"
+       placeholder="Masukkan nominal top up">
             </div>
-            <div class="info-item">
-                <div class="info-label"><i class="fas fa-coins"></i> TARUHAN</div>
-                <div class="info-value bet" id="current-bet">Rp 0</div>
+            <div class="modal-buttons">
+                <button class="btn-success" id="confirm-topup">
+                    <i class="fas fa-check"></i> Top Up Sekarang
+                </button>
             </div>
-            <div class="info-item">
-                <div class="info-label"><i class="fas fa-gift"></i> HADIAH LEVEL INI</div>
-                <div class="info-value" id="current-prize">Rp 0</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label"><i class="fas fa-star"></i> STATUS</div>
-                <div class="info-value" id="game-status">Belum Mulai</div>
-            </div>
-        </div>
-        
-        <div class="level-progress">
-            <div class="level-progress-bar" id="level-progress-bar"></div>
-        </div>
-        
-        <div class="level-indicator" id="level-indicator">
-            <!-- Level dots will be generated by JavaScript -->
-        </div>
-        
-        <div class="timer-container">
-            <div class="timer normal" id="timer">
-                <i class="fas fa-clock"></i>
-                <span id="timer-text">01:00</span>
-            </div>
-        </div>
-        
-        <div class="selection-info" id="selection-info" style="display: none;">
-            <i class="fas fa-info-circle"></i> <span id="selection-message">Klik box untuk memilih, klik lagi untuk deal</span>
-        </div>
-        
-        <div class="boxes-container" id="boxes-container">
-            <!-- Boxes will be generated by JavaScript -->
-        </div>
-        
-        <div class="controls">
-            <button class="btn-primary" id="start-game">
-                <i class="fas fa-play"></i> Mulai Permainan
-            </button>
-            <button class="btn-success" id="next-level-btn" style="display: none;">
-                <i class="fas fa-arrow-right"></i> Lanjut Level Berikutnya
-            </button>
-            <button class="btn-danger" id="cashout-btn" style="display: none;">
-                <i class="fas fa-money-bill-wave"></i> Cashout (Ambil Hadiah)
-            </button>
-        </div>
-        
-        <div class="cashout-info" id="cashout-info" style="display: none;">
-            <i class="fas fa-info-circle"></i> Dari Level 7, Anda dapat melakukan cashout untuk mengambil hadiah level ini.
         </div>
         
         <div class="game-rules">
@@ -784,6 +955,7 @@
                 <li>Jika lanjut ke level berikutnya, hadiah level sebelumnya hangus</li>
                 <li>Level 12 memiliki hadiah utama hingga Rp 150.000.000!</li>
                 <li><strong>Sistem Kunci Otomatis:</strong> Klik box untuk memilih, klik lagi untuk deal</li>
+                <li><strong>CRB (Clue Review Box):</strong> Dapat digunakan sekali untuk mendapatkan petunjuk box hadiah (tidak tersedia di level 12)</li>
                 <li>Setiap level memiliki timer 1 menit untuk memilih box</li>
             </ul>
         </div>
@@ -823,55 +995,6 @@
         </div>
     </div>
     
-    <!-- Modal untuk pengaturan -->
-    <div class="modal" id="settings-modal">
-        <div class="modal-content">
-            <h2><i class="fas fa-cog"></i> Pengaturan</h2>
-            <div class="input-group">
-                <label for="sound-toggle"><i class="fas fa-volume-up"></i> Suara:</label>
-                <select id="sound-toggle">
-                    <option value="on">Hidup</option>
-                    <option value="off">Mati</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <label for="animation-toggle"><i class="fas fa-film"></i> Animasi:</label>
-                <select id="animation-toggle">
-                    <option value="on">Hidup</option>
-                    <option value="off">Mati</option>
-                </select>
-            </div>
-            <div class="modal-buttons">
-                <button class="btn-primary" id="save-settings">
-                    <i class="fas fa-save"></i> Simpan
-                </button>
-                <button class="btn-warning" id="close-settings">
-                    <i class="fas fa-times"></i> Tutup
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Modal untuk top up saldo -->
-    <div class="modal" id="topup-modal">
-        <div class="modal-content">
-            <h2><i class="fas fa-plus-circle"></i> Top Up Saldo</h2>
-            <p>Pilih jumlah saldo yang ingin ditambahkan (simulasi).</p>
-            <div class="input-group">
-                <label for="topup-amount"><i class="fas fa-money-bill-wave"></i> Jumlah Top Up:</label>
-                <input type="number" id="topup-amount" min="50000" max="1000000" value="100000" step="50000">
-            </div>
-            <div class="modal-buttons">
-                <button class="btn-success" id="confirm-topup">
-                    <i class="fas fa-check"></i> Top Up
-                </button>
-                <button class="btn-warning" id="cancel-topup">
-                    <i class="fas fa-times"></i> Batal
-                </button>
-            </div>
-        </div>
-    </div>
-    
     <!-- Modal untuk game over -->
     <div class="modal result-modal" id="gameover-modal">
         <div class="modal-content">
@@ -904,7 +1027,9 @@
             timerInterval: null,
             timeLeft: 60,
             selectedBoxIndex: null,
-            lockedBoxIndex: null
+            lockedBoxIndex: null,
+            crbAvailable: false,
+            crbUsed: false
         };
 
         // DOM Elements
@@ -921,17 +1046,16 @@
         const selectionInfo = document.getElementById('selection-info');
         const selectionMessage = document.getElementById('selection-message');
         const startGameBtn = document.getElementById('start-game');
+        const crbBtn = document.getElementById('crb-btn');
         const nextLevelBtn = document.getElementById('next-level-btn');
         const cashoutBtn = document.getElementById('cashout-btn');
         const cashoutInfo = document.getElementById('cashout-info');
-        const settingsBtn = document.getElementById('settings-btn');
-        const topupBtn = document.getElementById('topup-btn');
+        const crbInfo = document.getElementById('crb-info');
+        const crbText = document.getElementById('crb-text');
         
         // Modal elements
         const startModal = document.getElementById('start-modal');
         const resultModal = document.getElementById('result-modal');
-        const settingsModal = document.getElementById('settings-modal');
-        const topupModal = document.getElementById('topup-modal');
         const gameoverModal = document.getElementById('gameover-modal');
         
         // Initialize the game
@@ -948,10 +1072,22 @@
                 startModal.style.display = 'flex';
             });
             
+            crbBtn.addEventListener('click', useCRB);
             nextLevelBtn.addEventListener('click', goToNextLevel);
             cashoutBtn.addEventListener('click', cashout);
-            settingsBtn.addEventListener('click', () => settingsModal.style.display = 'flex');
-            topupBtn.addEventListener('click', () => topupModal.style.display = 'flex');
+            
+            // Tab functionality
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove active class from all tabs and contents
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // Add active class to clicked tab and corresponding content
+                    tab.classList.add('active');
+                    document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+                });
+            });
             
             // Start modal events
             document.getElementById('confirm-start').addEventListener('click', confirmStartGame);
@@ -962,13 +1098,11 @@
                 resultModal.style.display = 'none';
             });
             
-            // Settings modal events
+            // Settings events
             document.getElementById('save-settings').addEventListener('click', saveSettings);
-            document.getElementById('close-settings').addEventListener('click', () => settingsModal.style.display = 'none');
             
-            // Top up modal events
+            // Top up events
             document.getElementById('confirm-topup').addEventListener('click', confirmTopup);
-            document.getElementById('cancel-topup').addEventListener('click', () => topupModal.style.display = 'none');
             
             // Game over modal events
             document.getElementById('play-again').addEventListener('click', () => {
@@ -977,7 +1111,7 @@
             });
             
             // Initial top up for demo
-            gameState.balance = 100000;
+            gameState.balance = 0;
             updateUI();
         }
         
@@ -1024,6 +1158,21 @@
                     nextLevelBtn.style.display = 'none';
                 }
                 
+                // Show CRB button if available and not final level
+                if (gameState.crbAvailable && !gameState.crbUsed && gameState.currentLevel < 12) {
+                    crbBtn.style.display = 'block';
+                    crbInfo.style.display = 'flex';
+                    crbText.textContent = 'CRB: 1 tersisa';
+                } else {
+                    crbBtn.style.display = 'none';
+                    if (gameState.crbUsed) {
+                        crbInfo.style.display = 'flex';
+                        crbText.textContent = 'CRB: Sudah digunakan';
+                    } else {
+                        crbInfo.style.display = 'none';
+                    }
+                }
+                
                 // Show selection info when game is active
                 selectionInfo.style.display = 'block';
             } else {
@@ -1031,6 +1180,8 @@
                 nextLevelBtn.style.display = 'none';
                 cashoutBtn.style.display = 'none';
                 cashoutInfo.style.display = 'none';
+                crbBtn.style.display = 'none';
+                crbInfo.style.display = 'none';
                 selectionInfo.style.display = 'none';
             }
             
@@ -1249,6 +1400,38 @@
             selectionMessage.textContent = `Box ${index + 1} terkunci. Klik lagi untuk deal atau pilih box lain`;
         }
         
+        // Use CRB (Clue Review Box)
+        function useCRB() {
+            if (gameState.crbUsed || !gameState.crbAvailable || gameState.currentLevel === 12) {
+                return;
+            }
+            
+            // Find boxes that contain prizes (not zonks)
+            const prizeBoxes = gameState.boxes.filter(box => box.type !== 'zonk' && !box.revealed);
+            
+            if (prizeBoxes.length === 0) {
+                alert('Tidak ada box hadiah yang tersisa!');
+                return;
+            }
+            
+            // Randomly select one prize box (50/50 chance)
+            const randomIndex = Math.floor(Math.random() * prizeBoxes.length);
+            const suggestedBox = prizeBoxes[randomIndex];
+            const boxIndex = gameState.boxes.indexOf(suggestedBox);
+            
+            // Mark CRB as used
+            gameState.crbUsed = true;
+            
+            // Highlight the suggested box
+            suggestedBox.element.classList.add('crb-suggestion');
+            
+            // Update UI
+            updateUI();
+            
+            // Show message
+            alert(`CRB menyarankan Box ${boxIndex + 1} sebagai pilihan yang mungkin berisi hadiah!`);
+        }
+        
         // Deal box selection
         function dealBox(index) {
             // Stop timer
@@ -1427,6 +1610,8 @@
             gameState.currentLevel = 1;
             gameState.currentPrize = 0;
             gameState.gameActive = true;
+            gameState.crbAvailable = true;
+            gameState.crbUsed = false;
             
             // Generate boxes for level 1
             generateBoxes();
@@ -1466,8 +1651,22 @@
             gameState.gameActive = false;
             gameState.lockedBoxIndex = null;
             gameState.selectedBoxIndex = null;
-            generateBoxes();
+            gameState.crbAvailable = false;
+            gameState.crbUsed = false;
             updateUI();
+            
+            // Clear boxes container
+            boxesContainer.innerHTML = '';
+            
+            // Reset timer display
+            timerTextElement.textContent = '01:00';
+            timerElement.className = 'timer normal';
+            
+            // Hide selection info
+            selectionInfo.style.display = 'none';
+            
+            // Reset level indicator
+            updateLevelIndicator();
         }
         
         // Confirm top up
@@ -1485,9 +1684,6 @@
             // Update UI
             updateUI();
             
-            // Close modal
-            topupModal.style.display = 'none';
-            
             // Show confirmation
             alert(`Saldo berhasil ditambahkan sebesar ${formatCurrency(topupAmount)}.`);
         }
@@ -1496,9 +1692,6 @@
         function saveSettings() {
             gameState.soundEnabled = document.getElementById('sound-toggle').value === 'on';
             gameState.animationEnabled = document.getElementById('animation-toggle').value === 'on';
-            
-            // Close modal
-            settingsModal.style.display = 'none';
             
             // Show confirmation
             alert('Pengaturan berhasil disimpan.');
