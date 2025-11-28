@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Box Blast - Game Tembak Hadiah</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --accent-color: #e74c3c;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --dark-color: #1a1a2e;
+            --darker-color: #16213e;
+            --light-color: #ecf0f1;
+            --box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            --glow: 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: var(--light-color);
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: rgba(26, 26, 46, 0.7);
+            border-radius: 15px;
+            box-shadow: var(--box-shadow);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            animation: rotate 20s linear infinite;
+            z-index: -1;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        h1 {
+            font-size: 3.2rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(to right, #ff6b6b, #ffd93d, #6bcf7f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+        
+        .header-subtitle {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            margin-bottom: 15px;
+            font-weight: 300;
+        }
+        
+        .top-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(26, 26, 46, 0.7);
+            padding: 15px 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: var(--box-shadow);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .balance-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .balance-icon {
+            font-size: 1.8rem;
+            color: var(--success-color);
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(26, 26, 46, 0.7);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: var(--box-shadow);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .info-item {
+            text-align: center;
+            flex: 1;
+            padding: 0 15px;
+            position: relative;
+        }
+        
+        .info-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 10%;
+            height: 80%;
+            width: 1px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .info-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        
+        .info-value {
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+        
+        .balance {
+            color: var(--success-color);
+        }
+        
+        .level {
+            color: var(--warning-color);
+        }
+        
+        .bet {
+            color: var(--primary-color);
+        }
+        
+        .level-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            gap: 8px;
+        }
+        
+        .level-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .level-dot::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transform: scale(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .level-dot.active {
+            background-color: var(--warning-color);
+            box-shadow: 0 0 10px var(--warning-color);
+        }
+        
+        .level-dot.active::before {
+            transform: scale(1);
+        }
+        
+        .level-dot.completed {
+            background-color: var(--success-color);
+        }
+        
+        .timer-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .timer {
+            background: rgba(26, 26, 46, 0.7);
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.8rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: var(--box-shadow);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .timer.normal {
+            color: var(--primary-color);
+        }
+        
+        .timer.warning {
+            color: var(--warning-color);
+            animation: pulse 1s infinite;
+        }
+        
+        .timer.danger {
+            color: var(--accent-color);
+            animation: pulse 0.5s infinite;
+        }
+        
+        .boxes-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+        
+        .box {
+            aspect-ratio: 1;
+            background: linear-gradient(145deg, #1e3c72, #2a5298);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            box-shadow: var(--box-shadow);
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+        }
+        
+        .box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 50%);
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        
+        .box::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.6s ease;
+            z-index: 2;
+        }
+        
+        .box:hover::before {
+            opacity: 1;
+        }
+        
+        .box:hover::after {
+            animation: shimmer 1.5s ease;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+        
+        .box:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        .box-number {
+            position: relative;
+            z-index: 3;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+            font-weight: 700;
+            color: white;
+        }
+        
+        .box.selected {
+            border: 3px solid var(--success-color);
+            box-shadow: 0 0 15px var(--success-color);
+        }
+        
+        .box.locked {
+            border: 3px solid var(--warning-color);
+            box-shadow: 0 0 20px var(--warning-color);
+            position: relative;
+        }
+        
+        .box.locked::before {
+            content: '\f023';
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            color: var(--warning-color);
+            font-size: 0.8rem;
+            z-index: 4;
+        }
+        
+        .box.revealed {
+            cursor: default;
+        }
+        
+        .box.revealed:hover {
+            transform: none;
+            box-shadow: var(--box-shadow);
+        }
+        
+        .box.prize {
+            background: linear-gradient(145deg, #27ae60, #2ecc71);
+            animation: pulse 1.5s infinite, glow 2s infinite alternate;
+        }
+        
+        .box.zonk {
+            background: linear-gradient(145deg, #7a1c1c, #a83232);
+        }
+        
+        .box.small-prize {
+            background: linear-gradient(145deg, #f39c12, #f1c40f);
+        }
+        
+        .box.medium-prize {
+            background: linear-gradient(145deg, #9b59b6, #8e44ad);
+        }
+        
+        .box.large-prize {
+            background: linear-gradient(145deg, #e74c3c, #c0392b);
+            animation: pulse 1.2s infinite, glow-gold 1.5s infinite alternate;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes glow {
+            from { box-shadow: 0 0 10px rgba(46, 204, 113, 0.5); }
+            to { box-shadow: 0 0 20px rgba(46, 204, 113, 0.8); }
+        }
+        
+        @keyframes glow-gold {
+            from { box-shadow: 0 0 15px rgba(255, 215, 0, 0.6); }
+            to { box-shadow: 0 0 25px rgba(255, 215, 0, 0.9); }
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        button {
+            padding: 14px 30px;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--box-shadow);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(145deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(145deg, var(--secondary-color), var(--primary-color));
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-success {
+            background: linear-gradient(145deg, var(--success-color), #27ae60);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: linear-gradient(145deg, #27ae60, var(--success-color));
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(145deg, var(--warning-color), #e67e22);
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background: linear-gradient(145deg, #e67e22, var(--warning-color));
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(145deg, var(--accent-color), #c0392b);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: linear-gradient(145deg, #c0392b, var(--accent-color));
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, var(--darker-color), var(--dark-color));
+            padding: 40px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            animation: modalAppear 0.5s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: linear-gradient(45deg, rgba(255,255,255,0.03), rgba(255,255,255,0));
+            z-index: -1;
+            border-radius: 25px;
+        }
+        
+        @keyframes modalAppear {
+            from { opacity: 0; transform: translateY(-50px) scale(0.9); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        .modal h2 {
+            margin-bottom: 20px;
+            color: var(--light-color);
+            font-size: 1.8rem;
+        }
+        
+        .modal p {
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 25px;
+        }
+        
+        .result-modal .modal-content {
+            background: linear-gradient(135deg, var(--darker-color), var(--dark-color));
+        }
+        
+        .result-modal.prize .modal-content {
+            background: linear-gradient(135deg, #1a535c, #27ae60);
+        }
+        
+        .result-modal.zonk .modal-content {
+            background: linear-gradient(135deg, #6d213c, #e74c3c);
+        }
+        
+        .prize-amount {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 25px 0;
+            color: gold;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
+            animation: pulse 1.5s infinite;
+        }
+        
+        .input-group {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background-color: rgba(255, 255, 255, 0.1);
+            font-size: 1rem;
+            color: var(--light-color);
+            transition: all 0.3s ease;
+        }
+        
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+        }
+        
+        .menu-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .cashout-info {
+            background: rgba(26, 26, 46, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            border-left: 4px solid var(--warning-color);
+        }
+        
+        .level-progress {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        
+        .level-progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, var(--primary-color), var(--success-color));
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .game-rules {
+            background: rgba(26, 26, 46, 0.7);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .game-rules h3 {
+            margin-bottom: 15px;
+            color: var(--warning-color);
+        }
+        
+        .game-rules ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        .game-rules li {
+            margin-bottom: 10px;
+            padding-left: 25px;
+            position: relative;
+        }
+        
+        .game-rules li:before {
+            content: '•';
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            position: absolute;
+            left: 0;
+            top: -5px;
+        }
+        
+        .selection-info {
+            text-align: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(26, 26, 46, 0.7);
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .boxes-container {
+                grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+                gap: 8px;
+            }
+            
+            .box {
+                font-size: 1rem;
+            }
+            
+            .controls, .menu-buttons, .modal-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+                max-width: 300px;
+                justify-content: center;
+            }
+            
+            .top-controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .game-info {
+                flex-wrap: wrap;
+            }
+            
+            .info-item {
+                flex: 1 1 45%;
+                margin-bottom: 15px;
+            }
+            
+            .info-item:not(:last-child)::after {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-bolt"></i> BOX BLAST</h1>
+            <p class="header-subtitle">Tembak box untuk mendapatkan hadiah uang tunai!</p>
+        </header>
+        
+        <div class="top-controls">
+            <div class="balance-container">
+                <i class="fas fa-wallet balance-icon"></i>
+                <div>
+                    <div class="info-label">SALDO ANDA</div>
+                    <div class="info-value balance" id="balance">Rp 0</div>
+                </div>
+            </div>
+            <div class="menu-buttons">
+                <button class="btn-warning" id="settings-btn">
+                    <i class="fas fa-cog"></i> Pengaturan
+                </button>
+                <button class="btn-success" id="topup-btn">
+                    <i class="fas fa-plus-circle"></i> Top Up Saldo
+                </button>
+            </div>
+        </div>
+        
+        <div class="game-info">
+            <div class="info-item">
+                <div class="info-label"><i class="fas fa-trophy"></i> LEVEL</div>
+                <div class="info-value level" id="current-level">1</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label"><i class="fas fa-coins"></i> TARUHAN</div>
+                <div class="info-value bet" id="current-bet">Rp 0</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label"><i class="fas fa-gift"></i> HADIAH LEVEL INI</div>
+                <div class="info-value" id="current-prize">Rp 0</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label"><i class="fas fa-star"></i> STATUS</div>
+                <div class="info-value" id="game-status">Belum Mulai</div>
+            </div>
+        </div>
+        
+        <div class="level-progress">
+            <div class="level-progress-bar" id="level-progress-bar"></div>
+        </div>
+        
+        <div class="level-indicator" id="level-indicator">
+            <!-- Level dots will be generated by JavaScript -->
+        </div>
+        
+        <div class="timer-container">
+            <div class="timer normal" id="timer">
+                <i class="fas fa-clock"></i>
+                <span id="timer-text">01:00</span>
+            </div>
+        </div>
+        
+        <div class="selection-info" id="selection-info" style="display: none;">
+            <i class="fas fa-info-circle"></i> <span id="selection-message">Klik box untuk memilih, klik lagi untuk deal</span>
+        </div>
+        
+        <div class="boxes-container" id="boxes-container">
+            <!-- Boxes will be generated by JavaScript -->
+        </div>
+        
+        <div class="controls">
+            <button class="btn-primary" id="start-game">
+                <i class="fas fa-play"></i> Mulai Permainan
+            </button>
+            <button class="btn-success" id="next-level-btn" style="display: none;">
+                <i class="fas fa-arrow-right"></i> Lanjut Level Berikutnya
+            </button>
+            <button class="btn-danger" id="cashout-btn" style="display: none;">
+                <i class="fas fa-money-bill-wave"></i> Cashout (Ambil Hadiah)
+            </button>
+        </div>
+        
+        <div class="cashout-info" id="cashout-info" style="display: none;">
+            <i class="fas fa-info-circle"></i> Dari Level 7, Anda dapat melakukan cashout untuk mengambil hadiah level ini.
+        </div>
+        
+        <div class="game-rules">
+            <h3><i class="fas fa-info-circle"></i> Aturan Permainan:</h3>
+            <ul>
+                <li>Pilih taruhan antara Rp 20.000 - Rp 500.000 untuk memulai permainan</li>
+                <li>Setiap level, pilih satu box untuk melihat hadiah atau zonk</li>
+                <li>Jika mendapatkan ZONK, permainan berakhir dan hadiah hangus</li>
+                <li>Dari Level 7, Anda dapat melakukan cashout untuk mengambil hadiah level ini</li>
+                <li>Jika lanjut ke level berikutnya, hadiah level sebelumnya hangus</li>
+                <li>Level 12 memiliki hadiah utama hingga Rp 150.000.000!</li>
+                <li><strong>Sistem Kunci Otomatis:</strong> Klik box untuk memilih, klik lagi untuk deal</li>
+                <li>Setiap level memiliki timer 1 menit untuk memilih box</li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Modal untuk memulai permainan -->
+    <div class="modal" id="start-modal">
+        <div class="modal-content">
+            <h2><i class="fas fa-play-circle"></i> Mulai Permainan Baru</h2>
+            <p>Pilih jumlah taruhan untuk memulai permainan. Minimal taruhan adalah Rp 20.000 dan maksimal Rp 500.000.</p>
+            <div class="input-group">
+                <label for="bet-amount"><i class="fas fa-coins"></i> Jumlah Taruhan:</label>
+                <input type="number" id="bet-amount" min="20000" max="500000" value="20000" step="10000">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-primary" id="confirm-start">
+                    <i class="fas fa-play"></i> Mulai
+                </button>
+                <button class="btn-warning" id="cancel-start">
+                    <i class="fas fa-times"></i> Batal
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal untuk hasil tembakan -->
+    <div class="modal result-modal" id="result-modal">
+        <div class="modal-content">
+            <h2 id="result-title"><i class="fas fa-trophy"></i> Hasil Tembakan</h2>
+            <p id="result-message">Anda mendapatkan hadiah!</p>
+            <div class="prize-amount" id="prize-amount">Rp 0</div>
+            <div class="modal-buttons">
+                <button class="btn-primary" id="continue-btn">
+                    <i class="fas fa-check"></i> Lanjutkan
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal untuk pengaturan -->
+    <div class="modal" id="settings-modal">
+        <div class="modal-content">
+            <h2><i class="fas fa-cog"></i> Pengaturan</h2>
+            <div class="input-group">
+                <label for="sound-toggle"><i class="fas fa-volume-up"></i> Suara:</label>
+                <select id="sound-toggle">
+                    <option value="on">Hidup</option>
+                    <option value="off">Mati</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="animation-toggle"><i class="fas fa-film"></i> Animasi:</label>
+                <select id="animation-toggle">
+                    <option value="on">Hidup</option>
+                    <option value="off">Mati</option>
+                </select>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-primary" id="save-settings">
+                    <i class="fas fa-save"></i> Simpan
+                </button>
+                <button class="btn-warning" id="close-settings">
+                    <i class="fas fa-times"></i> Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal untuk top up saldo -->
+    <div class="modal" id="topup-modal">
+        <div class="modal-content">
+            <h2><i class="fas fa-plus-circle"></i> Top Up Saldo</h2>
+            <p>Pilih jumlah saldo yang ingin ditambahkan (simulasi).</p>
+            <div class="input-group">
+                <label for="topup-amount"><i class="fas fa-money-bill-wave"></i> Jumlah Top Up:</label>
+                <input type="number" id="topup-amount" min="50000" max="1000000" value="100000" step="50000">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-success" id="confirm-topup">
+                    <i class="fas fa-check"></i> Top Up
+                </button>
+                <button class="btn-warning" id="cancel-topup">
+                    <i class="fas fa-times"></i> Batal
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal untuk game over -->
+    <div class="modal result-modal" id="gameover-modal">
+        <div class="modal-content">
+            <h2 id="gameover-title"><i class="fas fa-trophy"></i> Permainan Selesai</h2>
+            <p id="gameover-message">Selamat! Anda telah menyelesaikan semua level!</p>
+            <div class="prize-amount" id="final-prize">Rp 0</div>
+            <div class="modal-buttons">
+                <button class="btn-primary" id="play-again">
+                    <i class="fas fa-redo"></i> Main Lagi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        const gameState = {
+            balance: 0,
+            currentLevel: 1,
+            currentBet: 0,
+            currentPrize: 0,
+            boxes: [],
+            revealedBoxes: 0,
+            boxCountPerLevel: [0, 32, 28, 25, 22, 18, 16, 14, 12, 10, 8, 6, 4],
+            zonkPerLevel: [0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+            soundEnabled: true,
+            animationEnabled: true,
+            gameActive: false,
+            timerActive: false,
+            timerInterval: null,
+            timeLeft: 60,
+            selectedBoxIndex: null,
+            lockedBoxIndex: null
+        };
+
+        // DOM Elements
+        const balanceElement = document.getElementById('balance');
+        const currentLevelElement = document.getElementById('current-level');
+        const currentBetElement = document.getElementById('current-bet');
+        const currentPrizeElement = document.getElementById('current-prize');
+        const gameStatusElement = document.getElementById('game-status');
+        const boxesContainer = document.getElementById('boxes-container');
+        const levelIndicator = document.getElementById('level-indicator');
+        const levelProgressBar = document.getElementById('level-progress-bar');
+        const timerElement = document.getElementById('timer');
+        const timerTextElement = document.getElementById('timer-text');
+        const selectionInfo = document.getElementById('selection-info');
+        const selectionMessage = document.getElementById('selection-message');
+        const startGameBtn = document.getElementById('start-game');
+        const nextLevelBtn = document.getElementById('next-level-btn');
+        const cashoutBtn = document.getElementById('cashout-btn');
+        const cashoutInfo = document.getElementById('cashout-info');
+        const settingsBtn = document.getElementById('settings-btn');
+        const topupBtn = document.getElementById('topup-btn');
+        
+        // Modal elements
+        const startModal = document.getElementById('start-modal');
+        const resultModal = document.getElementById('result-modal');
+        const settingsModal = document.getElementById('settings-modal');
+        const topupModal = document.getElementById('topup-modal');
+        const gameoverModal = document.getElementById('gameover-modal');
+        
+        // Initialize the game
+        function initGame() {
+            updateUI();
+            createLevelIndicator();
+            
+            // Event listeners
+            startGameBtn.addEventListener('click', () => {
+                if (gameState.balance < 20000) {
+                    alert('Saldo tidak cukup. Minimal saldo Rp 20.000 untuk memulai permainan.');
+                    return;
+                }
+                startModal.style.display = 'flex';
+            });
+            
+            nextLevelBtn.addEventListener('click', goToNextLevel);
+            cashoutBtn.addEventListener('click', cashout);
+            settingsBtn.addEventListener('click', () => settingsModal.style.display = 'flex');
+            topupBtn.addEventListener('click', () => topupModal.style.display = 'flex');
+            
+            // Start modal events
+            document.getElementById('confirm-start').addEventListener('click', confirmStartGame);
+            document.getElementById('cancel-start').addEventListener('click', () => startModal.style.display = 'none');
+            
+            // Result modal events
+            document.getElementById('continue-btn').addEventListener('click', () => {
+                resultModal.style.display = 'none';
+            });
+            
+            // Settings modal events
+            document.getElementById('save-settings').addEventListener('click', saveSettings);
+            document.getElementById('close-settings').addEventListener('click', () => settingsModal.style.display = 'none');
+            
+            // Top up modal events
+            document.getElementById('confirm-topup').addEventListener('click', confirmTopup);
+            document.getElementById('cancel-topup').addEventListener('click', () => topupModal.style.display = 'none');
+            
+            // Game over modal events
+            document.getElementById('play-again').addEventListener('click', () => {
+                gameoverModal.style.display = 'none';
+                resetGame();
+            });
+            
+            // Initial top up for demo
+            gameState.balance = 100000;
+            updateUI();
+        }
+        
+        // Update UI with current game state
+        function updateUI() {
+            balanceElement.textContent = formatCurrency(gameState.balance);
+            currentLevelElement.textContent = gameState.currentLevel;
+            currentBetElement.textContent = formatCurrency(gameState.currentBet);
+            currentPrizeElement.textContent = formatCurrency(gameState.currentPrize);
+            
+            // Update game status
+            if (!gameState.gameActive) {
+                gameStatusElement.textContent = 'Belum Mulai';
+                gameStatusElement.style.color = 'white';
+            } else if (gameState.currentPrize > 0) {
+                gameStatusElement.textContent = 'Menang!';
+                gameStatusElement.style.color = 'var(--success-color)';
+            } else {
+                gameStatusElement.textContent = 'Sedang Bermain';
+                gameStatusElement.style.color = 'var(--warning-color)';
+            }
+            
+            // Update level progress
+            levelProgressBar.style.width = `${(gameState.currentLevel / 12) * 100}%`;
+            
+            // Show/hide buttons based on game state
+            if (gameState.gameActive) {
+                startGameBtn.style.display = 'none';
+                
+                if (gameState.currentLevel >= 7 && gameState.currentPrize > 0) {
+                    cashoutBtn.style.display = 'block';
+                    cashoutInfo.style.display = 'block';
+                    nextLevelBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Lanjut (Hadiah Hangus)';
+                } else {
+                    cashoutBtn.style.display = 'none';
+                    cashoutInfo.style.display = 'none';
+                    nextLevelBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Lanjut Level Berikutnya';
+                }
+                
+                // Show next level button if won and not final level
+                if (gameState.currentPrize > 0 && gameState.currentLevel < 12) {
+                    nextLevelBtn.style.display = 'block';
+                } else {
+                    nextLevelBtn.style.display = 'none';
+                }
+                
+                // Show selection info when game is active
+                selectionInfo.style.display = 'block';
+            } else {
+                startGameBtn.style.display = 'block';
+                nextLevelBtn.style.display = 'none';
+                cashoutBtn.style.display = 'none';
+                cashoutInfo.style.display = 'none';
+                selectionInfo.style.display = 'none';
+            }
+            
+            // Update level indicator
+            updateLevelIndicator();
+        }
+        
+        // Format currency in Indonesian Rupiah format
+        function formatCurrency(amount) {
+            return 'Rp ' + amount.toLocaleString('id-ID');
+        }
+        
+        // Create level indicator dots
+        function createLevelIndicator() {
+            levelIndicator.innerHTML = '';
+            for (let i = 1; i <= 12; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'level-dot';
+                if (i === 1) dot.classList.add('active');
+                levelIndicator.appendChild(dot);
+            }
+        }
+        
+        // Update level indicator
+        function updateLevelIndicator() {
+            const dots = levelIndicator.querySelectorAll('.level-dot');
+            dots.forEach((dot, index) => {
+                if (index + 1 === gameState.currentLevel) {
+                    dot.classList.add('active');
+                } else if (index + 1 < gameState.currentLevel) {
+                    dot.classList.remove('active');
+                    dot.classList.add('completed');
+                } else {
+                    dot.classList.remove('active', 'completed');
+                }
+            });
+        }
+        
+        // Start timer
+        function startTimer() {
+            gameState.timeLeft = 60;
+            gameState.timerActive = true;
+            updateTimerDisplay();
+            
+            gameState.timerInterval = setInterval(() => {
+                gameState.timeLeft--;
+                updateTimerDisplay();
+                
+                if (gameState.timeLeft <= 0) {
+                    clearInterval(gameState.timerInterval);
+                    gameState.timerActive = false;
+                    
+                    // Auto-select a random box if no selection made
+                    if (gameState.lockedBoxIndex === null) {
+                        const availableBoxes = gameState.boxes.filter(box => !box.revealed);
+                        if (availableBoxes.length > 0) {
+                            const randomIndex = Math.floor(Math.random() * availableBoxes.length);
+                            const boxIndex = gameState.boxes.indexOf(availableBoxes[randomIndex]);
+                            handleBoxClick(boxIndex);
+                            setTimeout(() => {
+                                handleBoxClick(boxIndex); // Deal the selection
+                            }, 500);
+                        }
+                    }
+                }
+            }, 1000);
+        }
+        
+        // Stop timer
+        function stopTimer() {
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+                gameState.timerActive = false;
+            }
+        }
+        
+        // Update timer display
+        function updateTimerDisplay() {
+            const minutes = Math.floor(gameState.timeLeft / 60);
+            const seconds = gameState.timeLeft % 60;
+            timerTextElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Update timer appearance based on time left
+            if (gameState.timeLeft > 10) {
+                timerElement.className = 'timer normal';
+            } else if (gameState.timeLeft > 5) {
+                timerElement.className = 'timer warning';
+            } else {
+                timerElement.className = 'timer danger';
+            }
+        }
+        
+        // Generate boxes for current level
+        function generateBoxes() {
+            boxesContainer.innerHTML = '';
+            gameState.boxes = [];
+            gameState.revealedBoxes = 0;
+            gameState.currentPrize = 0;
+            gameState.selectedBoxIndex = null;
+            gameState.lockedBoxIndex = null;
+            
+            const boxCount = gameState.boxCountPerLevel[gameState.currentLevel];
+            const zonkCount = gameState.zonkPerLevel[gameState.currentLevel];
+            
+            // Create prizes array
+            const prizes = [];
+            
+            // Add multiple prizes for each level (except final level)
+            if (gameState.currentLevel === 12) {
+                // Final level - only one big prize
+                const grandPrize = Math.round(100000000 + Math.random() * 50000000); // 100-150 juta
+                prizes.push({type: 'large-prize', value: grandPrize});
+            } else {
+                // Regular levels - multiple prizes with different sizes
+                const basePrize = gameState.currentBet;
+                
+                // Add large prizes (2-4 depending on level)
+                const largePrizeCount = Math.max(2, 6 - Math.floor(gameState.currentLevel / 2));
+                for (let i = 0; i < largePrizeCount; i++) {
+                    const multiplier = 3 + Math.random() * 7; // 3x to 10x base bet
+                    const largePrize = Math.round(basePrize * multiplier);
+                    prizes.push({type: 'large-prize', value: largePrize});
+                }
+                
+                // Add medium prizes (3-6 depending on level)
+                const mediumPrizeCount = Math.max(3, 8 - Math.floor(gameState.currentLevel / 2));
+                for (let i = 0; i < mediumPrizeCount; i++) {
+                    const multiplier = 1 + Math.random() * 2; // 1x to 3x base bet
+                    const mediumPrize = Math.round(basePrize * multiplier);
+                    prizes.push({type: 'medium-prize', value: mediumPrize});
+                }
+                
+                // Add small prizes (fill remaining slots)
+                const smallPrizeCount = Math.max(2, 10 - Math.floor(gameState.currentLevel));
+                for (let i = 0; i < smallPrizeCount; i++) {
+                    const multiplier = 0.3 + Math.random() * 0.7; // 0.3x to 1x base bet
+                    const smallPrize = Math.round(basePrize * multiplier);
+                    prizes.push({type: 'small-prize', value: smallPrize});
+                }
+            }
+            
+            // Add zonks
+            for (let i = 0; i < zonkCount; i++) {
+                prizes.push({type: 'zonk', value: 0});
+            }
+            
+            // Fill remaining boxes with small prizes if needed
+            const remainingBoxes = boxCount - prizes.length;
+            for (let i = 0; i < remainingBoxes; i++) {
+                const smallPrize = Math.round(gameState.currentBet * (0.1 + Math.random() * 0.4));
+                prizes.push({type: 'small-prize', value: smallPrize});
+            }
+            
+            // Shuffle prizes
+            shuffleArray(prizes);
+            
+            // Create boxes
+            for (let i = 0; i < boxCount; i++) {
+                const box = document.createElement('div');
+                box.className = 'box';
+                box.innerHTML = `<div class="box-number">${i + 1}</div>`;
+                
+                // Store prize information
+                gameState.boxes.push({
+                    element: box,
+                    type: prizes[i].type,
+                    value: prizes[i].value,
+                    revealed: false
+                });
+                
+                // Add click event
+                box.addEventListener('click', () => handleBoxClick(i));
+                
+                boxesContainer.appendChild(box);
+            }
+            
+            // Start timer for this level
+            startTimer();
+            
+            // Update selection message
+            selectionMessage.textContent = 'Klik box untuk memilih, klik lagi untuk deal';
+        }
+        
+        // Shuffle array using Fisher-Yates algorithm
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        // Handle box click
+        function handleBoxClick(index) {
+            const box = gameState.boxes[index];
+            
+            // If box already revealed, do nothing
+            if (box.revealed) return;
+            
+            // If this box is already locked (selected), then deal
+            if (gameState.lockedBoxIndex === index) {
+                dealBox(index);
+                return;
+            }
+            
+            // If another box is already locked, unlock it first
+            if (gameState.lockedBoxIndex !== null) {
+                gameState.boxes[gameState.lockedBoxIndex].element.classList.remove('locked');
+            }
+            
+            // Lock the new box
+            gameState.lockedBoxIndex = index;
+            box.element.classList.add('locked');
+            
+            // Update selection message
+            selectionMessage.textContent = `Box ${index + 1} terkunci. Klik lagi untuk deal atau pilih box lain`;
+        }
+        
+        // Deal box selection
+        function dealBox(index) {
+            // Stop timer
+            stopTimer();
+            
+            const box = gameState.boxes[index];
+            
+            // Mark box as revealed
+            box.revealed = true;
+            gameState.revealedBoxes++;
+            
+            // Disable all boxes
+            gameState.boxes.forEach(b => {
+                b.element.style.pointerEvents = 'none';
+            });
+            
+            // Add appropriate class based on prize
+            if (box.type === 'zonk') {
+                box.element.classList.add('revealed', 'zonk');
+                box.element.innerHTML = `<div class="box-number">ZONK</div>`;
+                
+                // Set current prize
+                gameState.currentPrize = 0;
+                
+                // Reveal all boxes after delay
+                setTimeout(() => {
+                    revealAllBoxes();
+                }, 800);
+                
+                // Show result modal after all boxes are revealed
+                setTimeout(() => {
+                    showResultModal(false, 0);
+                }, 2000);
+                
+                // End game if zonk
+                gameState.gameActive = false;
+            } else {
+                // It's a prize
+                let prizeClass = 'prize';
+                if (box.type === 'small-prize') prizeClass = 'small-prize';
+                if (box.type === 'medium-prize') prizeClass = 'medium-prize';
+                if (box.type === 'large-prize') prizeClass = 'large-prize';
+                
+                box.element.classList.add('revealed', prizeClass);
+                box.element.innerHTML = `<div class="box-number">${formatCurrency(box.value)}</div>`;
+                
+                // Set current prize
+                gameState.currentPrize = box.value;
+                
+                // Reveal all boxes after delay
+                setTimeout(() => {
+                    revealAllBoxes();
+                }, 800);
+                
+                // Show result modal after all boxes are revealed
+                setTimeout(() => {
+                    showResultModal(true, box.value);
+                }, 2000);
+            }
+            
+            // Update UI
+            updateUI();
+        }
+        
+        // Reveal all boxes
+        function revealAllBoxes() {
+            gameState.boxes.forEach(box => {
+                if (!box.revealed) {
+                    box.revealed = true;
+                    
+                    if (box.type === 'zonk') {
+                        box.element.classList.add('revealed', 'zonk');
+                        box.element.innerHTML = `<div class="box-number">ZONK</div>`;
+                    } else {
+                        let prizeClass = 'prize';
+                        if (box.type === 'small-prize') prizeClass = 'small-prize';
+                        if (box.type === 'medium-prize') prizeClass = 'medium-prize';
+                        if (box.type === 'large-prize') prizeClass = 'large-prize';
+                        
+                        box.element.classList.add('revealed', prizeClass);
+                        box.element.innerHTML = `<div class="box-number">${formatCurrency(box.value)}</div>`;
+                    }
+                }
+            });
+        }
+        
+        // Show result modal
+        function showResultModal(isPrize, amount) {
+            const resultModal = document.getElementById('result-modal');
+            const resultTitle = document.getElementById('result-title');
+            const resultMessage = document.getElementById('result-message');
+            const prizeAmount = document.getElementById('prize-amount');
+            const continueBtn = document.getElementById('continue-btn');
+            
+            if (isPrize) {
+                resultModal.className = 'modal result-modal prize';
+                resultTitle.innerHTML = '<i class="fas fa-trophy"></i> Selamat!';
+                
+                if (amount > gameState.currentBet * 5) {
+                    resultMessage.textContent = 'HADIAH BESAR! Anda mendapatkan:';
+                } else {
+                    resultMessage.textContent = 'Anda mendapatkan hadiah:';
+                }
+                
+                prizeAmount.textContent = formatCurrency(amount);
+                
+                // Show next level button if not zonk and not final level
+                if (gameState.currentLevel < 12) {
+                    continueBtn.innerHTML = '<i class="fas fa-check"></i> Lanjutkan';
+                    continueBtn.onclick = () => {
+                        resultModal.style.display = 'none';
+                    };
+                } else {
+                    continueBtn.innerHTML = '<i class="fas fa-trophy"></i> Selesai';
+                    continueBtn.onclick = () => {
+                        resultModal.style.display = 'none';
+                        gameState.balance += gameState.currentPrize;
+                        gameState.gameActive = false;
+                        updateUI();
+                        showGameOverModal(true);
+                    };
+                }
+            } else {
+                resultModal.className = 'modal result-modal zonk';
+                resultTitle.innerHTML = '<i class="fas fa-times-circle"></i> ZONK!';
+                resultMessage.textContent = 'Sayang sekali, Anda mendapatkan ZONK. Permainan berakhir dan hadiah hangus.';
+                prizeAmount.textContent = 'Rp 0';
+                continueBtn.innerHTML = '<i class="fas fa-redo"></i> Main Lagi';
+                continueBtn.onclick = () => {
+                    resultModal.style.display = 'none';
+                    resetGame();
+                };
+            }
+            
+            resultModal.style.display = 'flex';
+        }
+        
+        // Show game over modal
+        function showGameOverModal(isWin) {
+            const gameoverTitle = document.getElementById('gameover-title');
+            const gameoverMessage = document.getElementById('gameover-message');
+            const finalPrize = document.getElementById('final-prize');
+            
+            if (isWin) {
+                gameoverTitle.innerHTML = '<i class="fas fa-trophy"></i> Selamat!';
+                gameoverMessage.textContent = 'Anda telah menyelesaikan semua level dan memenangkan hadiah utama!';
+                gameoverModal.className = 'modal result-modal prize';
+                finalPrize.textContent = formatCurrency(gameState.currentPrize);
+            } else {
+                gameoverTitle.innerHTML = '<i class="fas fa-money-bill-wave"></i> Cashout Berhasil';
+                gameoverMessage.textContent = 'Anda memutuskan untuk cashout. Hadiah telah ditambahkan ke saldo Anda!';
+                gameoverModal.className = 'modal result-modal';
+                finalPrize.textContent = formatCurrency(gameState.currentPrize);
+            }
+            
+            gameoverModal.style.display = 'flex';
+        }
+        
+        // Confirm start game
+        function confirmStartGame() {
+            const betAmount = parseInt(document.getElementById('bet-amount').value);
+            
+            if (betAmount < 20000 || betAmount > 500000) {
+                alert('Taruhan harus antara Rp 20.000 dan Rp 500.000.');
+                return;
+            }
+            
+            if (gameState.balance < betAmount) {
+                alert('Saldo tidak cukup untuk taruhan ini.');
+                return;
+            }
+            
+            // Deduct bet from balance
+            gameState.balance -= betAmount;
+            gameState.currentBet = betAmount;
+            gameState.currentLevel = 1;
+            gameState.currentPrize = 0;
+            gameState.gameActive = true;
+            
+            // Generate boxes for level 1
+            generateBoxes();
+            
+            // Update UI
+            updateUI();
+            
+            // Close modal
+            startModal.style.display = 'none';
+        }
+        
+        // Go to next level
+        function goToNextLevel() {
+            if (gameState.currentLevel < 12) {
+                // Hadiah level sebelumnya hangus (tidak ditambahkan ke saldo)
+                gameState.currentLevel++;
+                generateBoxes();
+                nextLevelBtn.style.display = 'none';
+                updateUI();
+            }
+        }
+        
+        // Cashout function
+        function cashout() {
+            gameState.balance += gameState.currentPrize;
+            gameState.gameActive = false;
+            updateUI();
+            showGameOverModal(false);
+        }
+        
+        // Reset game
+        function resetGame() {
+            stopTimer();
+            gameState.currentLevel = 1;
+            gameState.currentBet = 0;
+            gameState.currentPrize = 0;
+            gameState.gameActive = false;
+            gameState.lockedBoxIndex = null;
+            gameState.selectedBoxIndex = null;
+            generateBoxes();
+            updateUI();
+        }
+        
+        // Confirm top up
+        function confirmTopup() {
+            const topupAmount = parseInt(document.getElementById('topup-amount').value);
+            
+            if (topupAmount < 50000 || topupAmount > 1000000) {
+                alert('Jumlah top up harus antara Rp 50.000 dan Rp 1.000.000.');
+                return;
+            }
+            
+            // Add to balance
+            gameState.balance += topupAmount;
+            
+            // Update UI
+            updateUI();
+            
+            // Close modal
+            topupModal.style.display = 'none';
+            
+            // Show confirmation
+            alert(`Saldo berhasil ditambahkan sebesar ${formatCurrency(topupAmount)}.`);
+        }
+        
+        // Save settings
+        function saveSettings() {
+            gameState.soundEnabled = document.getElementById('sound-toggle').value === 'on';
+            gameState.animationEnabled = document.getElementById('animation-toggle').value === 'on';
+            
+            // Close modal
+            settingsModal.style.display = 'none';
+            
+            // Show confirmation
+            alert('Pengaturan berhasil disimpan.');
+        }
+        
+        // Initialize the game when page loads
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>
