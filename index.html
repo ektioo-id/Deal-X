@@ -32,6 +32,32 @@
             min-height: 100vh;
             padding: 20px;
             overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Background Animation */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(52, 152, 219, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(46, 204, 113, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(155, 89, 182, 0.1) 0%, transparent 50%);
+            z-index: -1;
+            animation: backgroundFloat 20s ease-in-out infinite;
+        }
+        
+        @keyframes backgroundFloat {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+            }
+            50% {
+                transform: translateY(-20px) scale(1.05);
+            }
         }
         
         .container {
@@ -107,7 +133,7 @@
         }
         
         .balance-icon {
-            font-size: 1.8rem;
+            font-size: 1.4rem;
             color: var(--success-color);
         }
         
@@ -157,6 +183,7 @@
         
         .balance {
             color: var(--success-color);
+            font-size: 1.2rem;
         }
         
         .level {
@@ -428,6 +455,28 @@
             align-items: center;
             gap: 10px;
             font-size: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: all 0.6s ease;
+        }
+        
+        button:active::before {
+            left: 100%;
+        }
+        
+        button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
         }
         
         .btn-primary {
@@ -643,6 +692,7 @@
             border-radius: 15px;
             margin-top: 20px;
             border-left: 4px solid var(--primary-color);
+            display: none;
         }
         
         .game-rules h3 {
@@ -809,38 +859,34 @@
             <p class="header-subtitle">Tembak box untuk mendapatkan hadiah uang tunai!</p>
             
             <div class="top-controls">
-            <div class="balance-container">
-                <i class="fas fa-wallet balance-icon"></i>
-                <div>
-                    <div class="info-label">SALDO ANDA</div>
-                    <div class="info-value balance" id="balance">Rp 0</div>
+                <div class="balance-container">
+                    <i class="fas fa-wallet balance-icon"></i>
+                    <div>
+                        <div class="info-label">SALDO ANDA</div>
+                        <div class="info-value balance" id="balance">Rp 0</div>
+                    </div>
                 </div>
-            </div>
-        </header>
-        
-        
-
-                    
+                
                 <div class="crb-info" id="crb-info" style="display: none;">
                     <i class="fas fa-lightbulb"></i>
                     <span id="crb-text">CRB: 1 tersisa</span>
                 </div>
             </div>
-        </div>
+        </header>
         
         <div class="tabs">
-    <div class="tab active" data-tab="game">
-        <i class="fa-solid fa-gamepad"></i>
-    </div>
-    
-    <div class="tab" data-tab="topup">
-        <i class="fa-solid fa-wallet"></i>        
-    </div>
-    
-    <div class="tab" data-tab="settings">
-        <i class="fa-solid fa-gear"></i>
-    </div>
-</div>
+            <div class="tab active" data-tab="game">
+                <i class="fa-solid fa-gamepad"></i> Game
+            </div>
+            
+            <div class="tab" data-tab="topup">
+                <i class="fa-solid fa-wallet"></i> Top Up
+            </div>
+            
+            <div class="tab" data-tab="settings">
+                <i class="fa-solid fa-gear"></i> Pengaturan
+            </div>
+        </div>
         
         <div class="tab-content active" id="game-tab">
             <div class="game-info">
@@ -920,6 +966,22 @@
                     <option value="off">Mati</option>
                 </select>
             </div>
+            
+            <div class="game-rules" id="game-rules">
+                <h3><i class="fas fa-info-circle"></i> Aturan Permainan:</h3>
+                <ul>
+                    <li>Pilih taruhan antara Rp 20.000 - Rp 500.000 untuk memulai permainan</li>
+                    <li>Setiap level, pilih satu box untuk melihat hadiah atau zonk</li>
+                    <li>Jika mendapatkan ZONK, permainan berakhir dan hadiah hangus</li>
+                    <li>Dari Level 7, Anda dapat melakukan cashout untuk mengambil hadiah level ini</li>
+                    <li>Jika lanjut ke level berikutnya, hadiah level sebelumnya hangus</li>
+                    <li>Level 12 memiliki hadiah utama hingga Rp 150.000.000!</li>
+                    <li><strong>Sistem Kunci Otomatis:</strong> Klik box untuk memilih, klik lagi untuk deal</li>
+                    <li><strong>CRB (Clue Review Box):</strong> Dapat digunakan sekali untuk mendapatkan petunjuk box hadiah (tidak tersedia di level 12)</li>
+                    <li>Setiap level memiliki timer 1 menit untuk memilih box</li>
+                </ul>
+            </div>
+            
             <div class="modal-buttons">
                 <button class="btn-primary" id="save-settings">
                     <i class="fas fa-save"></i> Simpan Pengaturan
@@ -932,32 +994,17 @@
             <div class="input-group">
                 <label for="topup-amount"><i class="fas fa-money-bill-wave"></i> Jumlah Top Up:</label>
                 <input type="number" 
-       id="topup-amount"
-       min="50000" 
-       max="1000000" 
-       step="50000"
-       placeholder="Masukkan nominal top up">
+                       id="topup-amount"
+                       min="50000" 
+                       max="1000000" 
+                       step="50000"
+                       placeholder="Masukkan nominal top up">
             </div>
             <div class="modal-buttons">
                 <button class="btn-success" id="confirm-topup">
                     <i class="fas fa-check"></i> Top Up Sekarang
                 </button>
             </div>
-        </div>
-        
-        <div class="game-rules">
-            <h3><i class="fas fa-info-circle"></i> Aturan Permainan:</h3>
-            <ul>
-                <li>Pilih taruhan antara Rp 20.000 - Rp 500.000 untuk memulai permainan</li>
-                <li>Setiap level, pilih satu box untuk melihat hadiah atau zonk</li>
-                <li>Jika mendapatkan ZONK, permainan berakhir dan hadiah hangus</li>
-                <li>Dari Level 7, Anda dapat melakukan cashout untuk mengambil hadiah level ini</li>
-                <li>Jika lanjut ke level berikutnya, hadiah level sebelumnya hangus</li>
-                <li>Level 12 memiliki hadiah utama hingga Rp 150.000.000!</li>
-                <li><strong>Sistem Kunci Otomatis:</strong> Klik box untuk memilih, klik lagi untuk deal</li>
-                <li><strong>CRB (Clue Review Box):</strong> Dapat digunakan sekali untuk mendapatkan petunjuk box hadiah (tidak tersedia di level 12)</li>
-                <li>Setiap level memiliki timer 1 menit untuk memilih box</li>
-            </ul>
         </div>
     </div>
     
@@ -1052,6 +1099,7 @@
         const cashoutInfo = document.getElementById('cashout-info');
         const crbInfo = document.getElementById('crb-info');
         const crbText = document.getElementById('crb-text');
+        const gameRules = document.getElementById('game-rules');
         
         // Modal elements
         const startModal = document.getElementById('start-modal');
@@ -1086,6 +1134,13 @@
                     // Add active class to clicked tab and corresponding content
                     tab.classList.add('active');
                     document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+                    
+                    // Show game rules only in settings tab
+                    if (tab.dataset.tab === 'settings') {
+                        gameRules.style.display = 'block';
+                    } else {
+                        gameRules.style.display = 'none';
+                    }
                 });
             });
             
@@ -1108,6 +1163,16 @@
             document.getElementById('play-again').addEventListener('click', () => {
                 gameoverModal.style.display = 'none';
                 resetGame();
+            });
+            
+            // Add click animation to all buttons
+            document.querySelectorAll('button').forEach(button => {
+                button.addEventListener('click', function() {
+                    this.classList.add('active');
+                    setTimeout(() => {
+                        this.classList.remove('active');
+                    }, 300);
+                });
             });
             
             // Initial top up for demo
