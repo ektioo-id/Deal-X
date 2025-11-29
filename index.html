@@ -677,6 +677,52 @@
             animation: pulse 1.5s infinite;
         }
         
+        .grand-prize {
+            font-size: 4rem;
+            font-weight: bold;
+            margin: 25px 0;
+            color: gold;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.9);
+            animation: grandPrizeGlow 2s infinite alternate, pulse 1.5s infinite;
+            position: relative;
+            padding: 20px;
+            border-radius: 15px;
+            background: linear-gradient(45deg, rgba(255,215,0,0.2), rgba(218,165,32,0.2));
+            overflow: hidden;
+        }
+        
+        .grand-prize::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+            transform: rotate(45deg);
+            animation: grandPrizeShine 3s infinite;
+        }
+        
+        @keyframes grandPrizeGlow {
+            0% {
+                text-shadow: 0 0 20px rgba(255, 215, 0, 0.9), 0 0 30px rgba(255, 215, 0, 0.7);
+                box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+            }
+            100% {
+                text-shadow: 0 0 30px rgba(255, 215, 0, 1), 0 0 40px rgba(255, 215, 0, 0.8), 0 0 50px rgba(255, 215, 0, 0.6);
+                box-shadow: 0 0 40px rgba(255, 215, 0, 0.7), 0 0 60px rgba(255, 215, 0, 0.4);
+            }
+        }
+        
+        @keyframes grandPrizeShine {
+            0% {
+                transform: translateX(-100%) translateY(-100%) rotate(45deg);
+            }
+            100% {
+                transform: translateX(100%) translateY(100%) rotate(45deg);
+            }
+        }
+        
         .input-group {
             margin-bottom: 25px;
             text-align: left;
@@ -1081,6 +1127,11 @@
                 max-width: 90%;
                 padding: 12px 20px;
             }
+            
+            .grand-prize {
+                font-size: 2.5rem;
+                padding: 15px;
+            }
         }
     </style>
 </head>
@@ -1301,6 +1352,20 @@
             </div>
         </div>
     </div>
+    
+    <!-- Modal untuk hadiah utama -->
+    <div class="modal result-modal" id="grand-prize-modal">
+        <div class="modal-content">
+            <h2 id="grand-prize-title"><i class="fas fa-crown"></i> SELAMAT!</h2>
+            <p id="grand-prize-message">Anda memenangkan hadiah utama!</p>
+            <div class="grand-prize" id="grand-prize-amount">Rp 100.000.000</div>
+            <div class="modal-buttons">
+                <button class="btn-success" id="grand-prize-continue">
+                    <i class="fas fa-check"></i> Klaim Hadiah
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Game state
@@ -1374,6 +1439,7 @@
         const startModal = document.getElementById('start-modal');
         const resultModal = document.getElementById('result-modal');
         const gameoverModal = document.getElementById('gameover-modal');
+        const grandPrizeModal = document.getElementById('grand-prize-modal');
         
         // Initialize the game
         function initGame() {
@@ -1449,6 +1515,15 @@
                 resetGame();
             });
             
+            // Grand prize modal events
+            document.getElementById('grand-prize-continue').addEventListener('click', () => {
+                playSound('cashout');
+                grandPrizeModal.style.display = 'none';
+                gameState.balance += gameState.currentPrize;
+                gameState.gameActive = false;
+                updateUI();
+            });
+            
             // Add click animation to all buttons
             document.querySelectorAll('button').forEach(button => {
                 button.addEventListener('click', function() {
@@ -1492,12 +1567,19 @@
             
             // Load external BGM file (replace with your own file path)
             try {
-                sounds.bgm.src = 'bgm.mp3'; // Ganti dengan path file musik Anda
+                sounds.bgm.src = 'https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-667.mp3'; // URL musik eksternal
                 sounds.bgm.load();
+                sounds.bgm.play().catch(e => {
+                    console.log('External BGM failed, using generated BGM');
+                    // Fallback to generated BGM if external file not found
+                    sounds.bgm.play = generateChillBGM;
+                    sounds.bgm.play();
+                });
             } catch (error) {
                 console.log('External BGM not found, using generated BGM');
                 // Fallback to generated BGM if external file not found
                 sounds.bgm.play = generateChillBGM;
+                sounds.bgm.play();
             }
         }
         
@@ -2054,8 +2136,13 @@
             // Add multiple prizes for each level (except final level)
             if (gameState.currentLevel === 12) {
                 // Final level - only one big prize
-                const grandPrize = Math.round(100000000 + Math.random() * 50000000); // 100-150 juta
+                const grandPrize = 100000000; // 100 juta
                 prizes.push({type: 'large-prize', value: grandPrize});
+                
+                // Fill the rest with zonks
+                for (let i = 0; i < boxCount - 1; i++) {
+                    prizes.push({type: 'zonk', value: 0});
+                }
             } else {
                 // Regular levels - multiple prizes with different sizes
                 const basePrize = gameState.currentBet;
@@ -2083,18 +2170,18 @@
                     const smallPrize = Math.round(basePrize * multiplier);
                     prizes.push({type: 'small-prize', value: smallPrize});
                 }
-            }
-            
-            // Add zonks
-            for (let i = 0; i < zonkCount; i++) {
-                prizes.push({type: 'zonk', value: 0});
-            }
-            
-            // Fill remaining boxes with small prizes if needed
-            const remainingBoxes = boxCount - prizes.length;
-            for (let i = 0; i < remainingBoxes; i++) {
-                const smallPrize = Math.round(gameState.currentBet * (0.1 + Math.random() * 0.4));
-                prizes.push({type: 'small-prize', value: smallPrize});
+                
+                // Add zonks
+                for (let i = 0; i < zonkCount; i++) {
+                    prizes.push({type: 'zonk', value: 0});
+                }
+                
+                // Fill remaining boxes with small prizes if needed
+                const remainingBoxes = boxCount - prizes.length;
+                for (let i = 0; i < remainingBoxes; i++) {
+                    const smallPrize = Math.round(gameState.currentBet * (0.1 + Math.random() * 0.4));
+                    prizes.push({type: 'small-prize', value: smallPrize});
+                }
             }
             
             // Shuffle prizes
@@ -2261,10 +2348,17 @@
                 
                 showNotification('prize', title, message);
                 
-                // Reveal all boxes after delay
-                setTimeout(() => {
-                    revealAllBoxes();
-                }, 800);
+                // Special handling for grand prize (level 12)
+                if (gameState.currentLevel === 12 && box.value >= 100000000) {
+                    setTimeout(() => {
+                        showGrandPrizeModal(box.value);
+                    }, 1500);
+                } else {
+                    // Reveal all boxes after delay
+                    setTimeout(() => {
+                        revealAllBoxes();
+                    }, 800);
+                }
             }
             
             // Update UI
@@ -2291,6 +2385,19 @@
                     }
                 }
             });
+        }
+        
+        // Show grand prize modal
+        function showGrandPrizeModal(amount) {
+            const grandPrizeTitle = document.getElementById('grand-prize-title');
+            const grandPrizeMessage = document.getElementById('grand-prize-message');
+            const grandPrizeAmount = document.getElementById('grand-prize-amount');
+            
+            grandPrizeTitle.innerHTML = '<i class="fas fa-crown"></i> SELAMAT!';
+            grandPrizeMessage.textContent = 'Anda memenangkan hadiah utama!';
+            grandPrizeAmount.textContent = formatCurrency(amount);
+            
+            grandPrizeModal.style.display = 'flex';
         }
         
         // Show result modal
