@@ -1428,12 +1428,13 @@
             selectedBoxIndex: null,
             lockedBoxIndex: null,
             crbAvailable: false,
-            crbUsed: false
+            crbUsed: false,
+            audioContext: null,
+            bgmSource: null
         };
 
         // Sound effects
         const sounds = {
-            bgm: null,
             click: null,
             boxOpen: null,
             prize: null,
@@ -1483,6 +1484,7 @@
         
         // Initialize the game
         function initGame() {
+            initAudioContext();
             initSounds();
             updateUI();
             createLevelIndicator();
@@ -1583,333 +1585,361 @@
             updateUI();
             
             // Start BGM immediately
-            playSound('bgm');
+            startBGM();
+        }
+        
+        // Initialize Audio Context
+        function initAudioContext() {
+            try {
+                gameState.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.log("Web Audio API tidak didukung di browser ini.");
+                gameState.audioContext = null;
+            }
         }
         
         // Initialize sounds
         function initSounds() {
-            // Create audio elements
-            sounds.bgm = new Audio();
-            sounds.click = new Audio();
-            sounds.boxOpen = new Audio();
-            sounds.prize = new Audio();
-            sounds.zonk = new Audio();
-            sounds.levelUp = new Audio();
-            sounds.cashout = new Audio();
-            sounds.gameOver = new Audio();
-            sounds.timerTick = new Audio();
-            sounds.timerWarning = new Audio();
-            sounds.timerDanger = new Audio();
-            
-            // Generate sound effects using Web Audio API
+            // Generate all sound effects
             generateSounds();
+        }
+        
+        // Start BGM
+        function startBGM() {
+            if (!gameState.audioContext || !gameState.soundEnabled) return;
             
-            // Set BGM properties
-            sounds.bgm.loop = true;
-            sounds.bgm.volume = gameState.bgmVolume / 100;
-            
-            // Load external BGM file
             try {
-                // Using a free game music from Mixkit
-                sounds.bgm.src = 'https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-667.mp3';
-                sounds.bgm.load();
-                sounds.bgm.play().catch(e => {
-                    console.log('External BGM failed, using generated BGM');
-                    // Fallback to generated BGM if external file not found
-                    sounds.bgm.play = generateChillBGM;
-                    sounds.bgm.play();
-                });
+                stopBGM(); // Stop existing BGM if any
+                
+                // Create BGM using Web Audio API
+                gameState.bgmSource = gameState.audioContext.createOscillator();
+                const bgmGain = gameState.audioContext.createGain();
+                const filter = gameState.audioContext.createBiquadFilter();
+                
+                gameState.bgmSource.connect(filter);
+                filter.connect(bgmGain);
+                bgmGain.connect(gameState.audioContext.destination);
+                
+                // Create a more complex BGM with multiple oscillators
+                const bgm2 = gameState.audioContext.createOscillator();
+                const bgm2Gain = gameState.audioContext.createGain();
+                const filter2 = gameState.audioContext.createBiquadFilter();
+                
+                bgm2.connect(filter2);
+                filter2.connect(bgm2Gain);
+                bgm2Gain.connect(gameState.audioContext.destination);
+                
+                // Main melody (higher frequency, softer)
+                gameState.bgmSource.type = 'triangle';
+                gameState.bgmSource.frequency.setValueAtTime(330, gameState.audioContext.currentTime); // E note
+                
+                // Bass line (lower frequency)
+                bgm2.type = 'sine';
+                bgm2.frequency.setValueAtTime(165, gameState.audioContext.currentTime); // E note, one octave lower
+                
+                // Set filter for main melody
+                filter.type = 'lowpass';
+                filter.frequency.value = 1200;
+                filter.Q.value = 0.7;
+                
+                // Set filter for bass
+                filter2.type = 'lowpass';
+                filter2.frequency.value = 400;
+                filter2.Q.value = 0.5;
+                
+                // Set volume with fade in
+                bgmGain.gain.setValueAtTime(0, gameState.audioContext.currentTime);
+                bgmGain.gain.linearRampToValueAtTime(0.05 * (gameState.bgmVolume / 100), gameState.audioContext.currentTime + 1);
+                
+                bgm2Gain.gain.setValueAtTime(0, gameState.audioContext.currentTime);
+                bgm2Gain.gain.linearRampToValueAtTime(0.03 * (gameState.bgmVolume / 100), gameState.audioContext.currentTime + 1);
+                
+                // Create a simple melody pattern
+                let currentTime = gameState.audioContext.currentTime + 1;
+                const noteDuration = 2; // seconds per note
+                
+                // Melody sequence for main oscillator (E, G#, B, E)
+                const melodyNotes = [330, 415.3, 493.88, 330]; // E, G#, B, E
+                let melodyIndex = 0;
+                
+                // Bass sequence (E, E, B, E)
+                const bassNotes = [165, 165, 246.94, 165]; // E, E, B, E
+                let bassIndex = 0;
+                
+                // Schedule melody changes
+                function scheduleNextNote() {
+                    if (!gameState.soundEnabled || !gameState.bgmSource) return;
+                    
+                    // Schedule next melody note
+                    const nextMelodyNote = melodyNotes[melodyIndex % melodyNotes.length];
+                    gameState.bgmSource.frequency.exponentialRampToValueAtTime(nextMelodyNote, currentTime);
+                    
+                    // Schedule next bass note
+                    const nextBassNote = bassNotes[bassIndex % bassNotes.length];
+                    bgm2.frequency.exponentialRampToValueAtTime(nextBassNote, currentTime);
+                    
+                    melodyIndex++;
+                    bassIndex++;
+                    currentTime += noteDuration;
+                    
+                    // Schedule next note if still playing
+                    if (gameState.soundEnabled && gameState.bgmSource) {
+                        setTimeout(scheduleNextNote, noteDuration * 1000);
+                    }
+                }
+                
+                // Start oscillators
+                gameState.bgmSource.start();
+                bgm2.start();
+                
+                // Start melody sequence after initial fade in
+                setTimeout(scheduleNextNote, 1000);
+                
+                console.log("BGM started successfully");
             } catch (error) {
-                console.log('External BGM not found, using generated BGM');
-                // Fallback to generated BGM if external file not found
-                sounds.bgm.play = generateChillBGM;
-                sounds.bgm.play();
+                console.log("Error starting BGM:", error);
+            }
+        }
+        
+        // Stop BGM
+        function stopBGM() {
+            if (gameState.bgmSource) {
+                try {
+                    gameState.bgmSource.stop();
+                    gameState.bgmSource = null;
+                } catch (e) {
+                    console.log("Error stopping BGM:", e);
+                }
             }
         }
         
         // Generate sound effects using Web Audio API
         function generateSounds() {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            if (!gameState.audioContext) return;
             
             // Click sound
-            function generateClick() {
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.frequency.value = 800;
-                oscillator.type = 'sine';
-                
-                gainNode.gain.setValueAtTime(0.3 * (gameState.sfxVolume / 100), audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.1);
-            }
+            sounds.click = {
+                play: function() {
+                    const oscillator = gameState.audioContext.createOscillator();
+                    const gainNode = gameState.audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(gameState.audioContext.destination);
+                    
+                    oscillator.frequency.value = 800;
+                    oscillator.type = 'sine';
+                    
+                    gainNode.gain.setValueAtTime(0.3 * (gameState.sfxVolume / 100), gameState.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, gameState.audioContext.currentTime + 0.1);
+                    
+                    oscillator.start(gameState.audioContext.currentTime);
+                    oscillator.stop(gameState.audioContext.currentTime + 0.1);
+                }
+            };
             
             // Box open sound
-            function generateBoxOpen() {
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
-                oscillator.frequency.exponentialRampToValueAtTime(800, audioContext.currentTime + 0.3);
-                oscillator.type = 'sine';
-                
-                gainNode.gain.setValueAtTime(0.4 * (gameState.sfxVolume / 100), audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.3);
-            }
+            sounds.boxOpen = {
+                play: function() {
+                    const oscillator = gameState.audioContext.createOscillator();
+                    const gainNode = gameState.audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(gameState.audioContext.destination);
+                    
+                    oscillator.frequency.setValueAtTime(300, gameState.audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(800, gameState.audioContext.currentTime + 0.3);
+                    oscillator.type = 'sine';
+                    
+                    gainNode.gain.setValueAtTime(0.4 * (gameState.sfxVolume / 100), gameState.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, gameState.audioContext.currentTime + 0.3);
+                    
+                    oscillator.start(gameState.audioContext.currentTime);
+                    oscillator.stop(gameState.audioContext.currentTime + 0.3);
+                }
+            };
             
             // Prize sound
-            function generatePrize() {
-                // Create multiple oscillators for a richer sound
-                for (let i = 0; i < 3; i++) {
-                    const oscillator = audioContext.createOscillator();
-                    const gainNode = audioContext.createGain();
-                    
-                    oscillator.connect(gainNode);
-                    gainNode.connect(audioContext.destination);
-                    
-                    const freq = 400 + (i * 200);
-                    oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(freq * 2, audioContext.currentTime + 0.5);
-                    oscillator.type = 'sine';
-                    
-                    gainNode.gain.setValueAtTime(0.2 * (gameState.sfxVolume / 100), audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-                    
-                    oscillator.start(audioContext.currentTime + (i * 0.1));
-                    oscillator.stop(audioContext.currentTime + 0.5 + (i * 0.1));
+            sounds.prize = {
+                play: function() {
+                    // Create multiple oscillators for a richer sound
+                    for (let i = 0; i < 3; i++) {
+                        const oscillator = gameState.audioContext.createOscillator();
+                        const gainNode = gameState.audioContext.createGain();
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(gameState.audioContext.destination);
+                        
+                        const freq = 400 + (i * 200);
+                        oscillator.frequency.setValueAtTime(freq, gameState.audioContext.currentTime);
+                        oscillator.frequency.exponentialRampToValueAtTime(freq * 2, gameState.audioContext.currentTime + 0.5);
+                        oscillator.type = 'sine';
+                        
+                        gainNode.gain.setValueAtTime(0.2 * (gameState.sfxVolume / 100), gameState.audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, gameState.audioContext.currentTime + 0.5);
+                        
+                        oscillator.start(gameState.audioContext.currentTime + (i * 0.1));
+                        oscillator.stop(gameState.audioContext.currentTime + 0.5 + (i * 0.1));
+                    }
                 }
-            }
+            };
             
             // Zonk sound
-            function generateZonk() {
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
-                oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.5);
-                oscillator.type = 'sawtooth';
-                
-                gainNode.gain.setValueAtTime(0.4 * (gameState.sfxVolume / 100), audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.5);
-            }
-            
-            // Level up sound
-            function generateLevelUp() {
-                for (let i = 0; i < 5; i++) {
-                    const oscillator = audioContext.createOscillator();
-                    const gainNode = audioContext.createGain();
+            sounds.zonk = {
+                play: function() {
+                    const oscillator = gameState.audioContext.createOscillator();
+                    const gainNode = gameState.audioContext.createGain();
                     
                     oscillator.connect(gainNode);
-                    gainNode.connect(audioContext.destination);
+                    gainNode.connect(gameState.audioContext.destination);
                     
-                    const freq = 300 + (i * 100);
-                    oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
-                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(200, gameState.audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(100, gameState.audioContext.currentTime + 0.5);
+                    oscillator.type = 'sawtooth';
                     
-                    gainNode.gain.setValueAtTime(0.2 * (gameState.sfxVolume / 100), audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                    gainNode.gain.setValueAtTime(0.4 * (gameState.sfxVolume / 100), gameState.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, gameState.audioContext.currentTime + 0.5);
                     
-                    oscillator.start(audioContext.currentTime + (i * 0.1));
-                    oscillator.stop(audioContext.currentTime + 0.3 + (i * 0.1));
+                    oscillator.start(gameState.audioContext.currentTime);
+                    oscillator.stop(gameState.audioContext.currentTime + 0.5);
                 }
-            }
+            };
+            
+            // Level up sound
+            sounds.levelUp = {
+                play: function() {
+                    for (let i = 0; i < 5; i++) {
+                        const oscillator = gameState.audioContext.createOscillator();
+                        const gainNode = gameState.audioContext.createGain();
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(gameState.audioContext.destination);
+                        
+                        const freq = 300 + (i * 100);
+                        oscillator.frequency.setValueAtTime(freq, gameState.audioContext.currentTime);
+                        oscillator.type = 'sine';
+                        
+                        gainNode.gain.setValueAtTime(0.2 * (gameState.sfxVolume / 100), gameState.audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, gameState.audioContext.currentTime + 0.3);
+                        
+                        oscillator.start(gameState.audioContext.currentTime + (i * 0.1));
+                        oscillator.stop(gameState.audioContext.currentTime + 0.3 + (i * 0.1));
+                    }
+                }
+            };
             
             // Cashout sound
-            function generateCashout() {
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                // Cash register-like sound
-                oscillator.frequency.setValueAtTime(100, audioContext.currentTime);
-                oscillator.frequency.linearRampToValueAtTime(800, audioContext.currentTime + 0.1);
-                oscillator.frequency.linearRampToValueAtTime(100, audioContext.currentTime + 0.2);
-                oscillator.frequency.linearRampToValueAtTime(600, audioContext.currentTime + 0.3);
-                oscillator.type = 'square';
-                
-                gainNode.gain.setValueAtTime(0.3 * (gameState.sfxVolume / 100), audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.4);
-            }
+            sounds.cashout = {
+                play: function() {
+                    const oscillator = gameState.audioContext.createOscillator();
+                    const gainNode = gameState.audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(gameState.audioContext.destination);
+                    
+                    // Cash register-like sound
+                    oscillator.frequency.setValueAtTime(100, gameState.audioContext.currentTime);
+                    oscillator.frequency.linearRampToValueAtTime(800, gameState.audioContext.currentTime + 0.1);
+                    oscillator.frequency.linearRampToValueAtTime(100, gameState.audioContext.currentTime + 0.2);
+                    oscillator.frequency.linearRampToValueAtTime(600, gameState.audioContext.currentTime + 0.3);
+                    oscillator.type = 'square';
+                    
+                    gainNode.gain.setValueAtTime(0.3 * (gameState.sfxVolume / 100), gameState.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, gameState.audioContext.currentTime + 0.4);
+                    
+                    oscillator.start(gameState.audioContext.currentTime);
+                    oscillator.stop(gameState.audioContext.currentTime + 0.4);
+                }
+            };
             
             // Game over sound
-            function generateGameOver() {
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
-                oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 1);
-                oscillator.type = 'sawtooth';
-                
-                gainNode.gain.setValueAtTime(0.4 * (gameState.sfxVolume / 100), audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 1);
-            }
+            sounds.gameOver = {
+                play: function() {
+                    const oscillator = gameState.audioContext.createOscillator();
+                    const gainNode = gameState.audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(gameState.audioContext.destination);
+                    
+                    oscillator.frequency.setValueAtTime(400, gameState.audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(100, gameState.audioContext.currentTime + 1);
+                    oscillator.type = 'sawtooth';
+                    
+                    gainNode.gain.setValueAtTime(0.4 * (gameState.sfxVolume / 100), gameState.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, gameState.audioContext.currentTime + 1);
+                    
+                    oscillator.start(gameState.audioContext.currentTime);
+                    oscillator.stop(gameState.audioContext.currentTime + 1);
+                }
+            };
             
             // Timer tick sound (normal)
-            function generateTimerTick() {
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.frequency.value = 600;
-                oscillator.type = 'sine';
-                
-                gainNode.gain.setValueAtTime(0.1 * (gameState.sfxVolume / 100), audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.1);
-            }
+            sounds.timerTick = {
+                play: function() {
+                    const oscillator = gameState.audioContext.createOscillator();
+                    const gainNode = gameState.audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(gameState.audioContext.destination);
+                    
+                    oscillator.frequency.value = 600;
+                    oscillator.type = 'sine';
+                    
+                    gainNode.gain.setValueAtTime(0.1 * (gameState.sfxVolume / 100), gameState.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, gameState.audioContext.currentTime + 0.1);
+                    
+                    oscillator.start(gameState.audioContext.currentTime);
+                    oscillator.stop(gameState.audioContext.currentTime + 0.1);
+                }
+            };
             
             // Timer warning sound (under 10 seconds)
-            function generateTimerWarning() {
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.frequency.value = 800;
-                oscillator.type = 'sine';
-                
-                gainNode.gain.setValueAtTime(0.2 * (gameState.sfxVolume / 100), audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.2);
-            }
+            sounds.timerWarning = {
+                play: function() {
+                    const oscillator = gameState.audioContext.createOscillator();
+                    const gainNode = gameState.audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(gameState.audioContext.destination);
+                    
+                    oscillator.frequency.value = 800;
+                    oscillator.type = 'sine';
+                    
+                    gainNode.gain.setValueAtTime(0.2 * (gameState.sfxVolume / 100), gameState.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, gameState.audioContext.currentTime + 0.2);
+                    
+                    oscillator.start(gameState.audioContext.currentTime);
+                    oscillator.stop(gameState.audioContext.currentTime + 0.2);
+                }
+            };
             
             // Timer danger sound (under 5 seconds)
-            function generateTimerDanger() {
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.frequency.value = 1000;
-                oscillator.type = 'sine';
-                
-                gainNode.gain.setValueAtTime(0.3 * (gameState.sfxVolume / 100), audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.3);
-            }
-            
-            // Chill BGM - fallback if external file not available
-            function generateChillBGM() {
-                // Create main oscillator for pad
-                const padOscillator = audioContext.createOscillator();
-                const padGain = audioContext.createGain();
-                const padFilter = audioContext.createBiquadFilter();
-                
-                padOscillator.connect(padFilter);
-                padFilter.connect(padGain);
-                padGain.connect(audioContext.destination);
-                
-                padOscillator.frequency.value = 110;
-                padOscillator.type = 'sine';
-                
-                padFilter.type = 'lowpass';
-                padFilter.frequency.value = 800;
-                
-                padGain.gain.value = 0.05 * (gameState.bgmVolume / 100);
-                
-                // Create melody oscillator
-                const melodyOscillator = audioContext.createOscillator();
-                const melodyGain = audioContext.createGain();
-                const melodyFilter = audioContext.createBiquadFilter();
-                
-                melodyOscillator.connect(melodyFilter);
-                melodyFilter.connect(melodyGain);
-                melodyGain.connect(audioContext.destination);
-                
-                melodyOscillator.type = 'triangle';
-                melodyGain.gain.value = 0.03 * (gameState.bgmVolume / 100);
-                
-                melodyFilter.type = 'lowpass';
-                melodyFilter.frequency.value = 1200;
-                
-                // Simple melody sequence
-                const melodyNotes = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63]; // C, E, G, C, G, E
-                let noteIndex = 0;
-                
-                function playNextNote() {
-                    melodyOscillator.frequency.setValueAtTime(melodyNotes[noteIndex], audioContext.currentTime);
-                    noteIndex = (noteIndex + 1) % melodyNotes.length;
+            sounds.timerDanger = {
+                play: function() {
+                    const oscillator = gameState.audioContext.createOscillator();
+                    const gainNode = gameState.audioContext.createGain();
                     
-                    // Schedule next note
-                    setTimeout(playNextNote, 1500);
+                    oscillator.connect(gainNode);
+                    gainNode.connect(gameState.audioContext.destination);
+                    
+                    oscillator.frequency.value = 1000;
+                    oscillator.type = 'sine';
+                    
+                    gainNode.gain.setValueAtTime(0.3 * (gameState.sfxVolume / 100), gameState.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, gameState.audioContext.currentTime + 0.3);
+                    
+                    oscillator.start(gameState.audioContext.currentTime);
+                    oscillator.stop(gameState.audioContext.currentTime + 0.3);
                 }
-                
-                // Start oscillators
-                padOscillator.start();
-                melodyOscillator.start();
-                
-                // Start melody sequence
-                playNextNote();
-            }
-            
-            // Store the functions to call later
-            sounds.click.play = generateClick;
-            sounds.boxOpen.play = generateBoxOpen;
-            sounds.prize.play = generatePrize;
-            sounds.zonk.play = generateZonk;
-            sounds.levelUp.play = generateLevelUp;
-            sounds.cashout.play = generateCashout;
-            sounds.gameOver.play = generateGameOver;
-            sounds.timerTick.play = generateTimerTick;
-            sounds.timerWarning.play = generateTimerWarning;
-            sounds.timerDanger.play = generateTimerDanger;
+            };
         }
         
         // Play sound effect
         function playSound(soundName) {
-            if (!gameState.soundEnabled) return;
+            if (!gameState.soundEnabled || !gameState.audioContext) return;
             
             try {
-                if (sounds[soundName]) {
-                    // For external BGM, use HTML5 Audio
-                    if (soundName === 'bgm' && sounds.bgm.src) {
-                        sounds.bgm.volume = gameState.bgmVolume / 100;
-                        sounds.bgm.play().catch(e => {
-                            console.log('BGM play failed:', e);
-                            // Fallback to generated BGM
-                            if (sounds.bgm.play) sounds.bgm.play();
-                        });
-                    } else if (sounds[soundName].play) {
-                        sounds[soundName].play();
-                    }
+                if (sounds[soundName] && sounds[soundName].play) {
+                    sounds[soundName].play();
                 }
             } catch (error) {
                 console.log('Error playing sound:', error);
@@ -1921,8 +1951,9 @@
             gameState.bgmVolume = bgmVolumeSlider.value;
             bgmVolumeValue.textContent = `${gameState.bgmVolume}%`;
             
-            if (sounds.bgm && sounds.bgm.volume !== undefined) {
-                sounds.bgm.volume = gameState.bgmVolume / 100;
+            // Restart BGM with new volume
+            if (gameState.soundEnabled) {
+                startBGM();
             }
         }
         
@@ -1938,14 +1969,12 @@
             
             if (gameState.soundEnabled) {
                 soundToggleBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
-                // Start BGM if game is active
-                playSound('bgm');
+                // Start BGM
+                startBGM();
             } else {
                 soundToggleBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
-                // Stop all sounds
-                Object.values(sounds).forEach(sound => {
-                    if (sound && sound.pause) sound.pause();
-                });
+                // Stop BGM
+                stopBGM();
             }
         }
         
