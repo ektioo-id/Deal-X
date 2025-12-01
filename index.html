@@ -34,6 +34,19 @@
             padding: 20px;
             overflow-x: hidden;
             position: relative;
+            transition: background 1s ease;
+        }
+        
+        body.game-bg {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+        }
+        
+        body.topup-bg {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+        }
+        
+        body.settings-bg {
+            background: linear-gradient(135deg, #3a1c71, #d76d77, #ffaf7b);
         }
         
         /* Background Animation */
@@ -50,6 +63,7 @@
                 radial-gradient(circle at 40% 80%, rgba(255, 158, 125, 0.1) 0%, transparent 50%);
             z-index: -1;
             animation: backgroundFloat 20s ease-in-out infinite;
+            filter: blur(5px);
         }
         
         @keyframes backgroundFloat {
@@ -542,52 +556,52 @@
         }
         
         .btn-primary {
-            background: linear-gradient(145deg, var(--primary-color), var(--secondary-color));
+            background: linear-gradient(145deg, #6a11cb, #2575fc);
             color: white;
         }
         
         .btn-primary:hover {
-            background: linear-gradient(145deg, var(--secondary-color), var(--primary-color));
+            background: linear-gradient(145deg, #2575fc, #6a11cb);
             box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
         }
         
         .btn-success {
-            background: linear-gradient(145deg, var(--success-color), #26de81);
+            background: linear-gradient(145deg, #11998e, #38ef7d);
             color: white;
         }
         
         .btn-success:hover {
-            background: linear-gradient(145deg, #26de81, var(--success-color));
+            background: linear-gradient(145deg, #38ef7d, #11998e);
             box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
         }
         
         .btn-warning {
-            background: linear-gradient(145deg, var(--warning-color), #FFB142);
+            background: linear-gradient(145deg, #ff9a00, #ff5e62);
             color: white;
         }
         
         .btn-warning:hover {
-            background: linear-gradient(145deg, #FFB142, var(--warning-color));
+            background: linear-gradient(145deg, #ff5e62, #ff9a00);
             box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
         }
         
         .btn-danger {
-            background: linear-gradient(145deg, var(--accent-color), #ff3838);
+            background: linear-gradient(145deg, #ff416c, #ff4b2b);
             color: white;
         }
         
         .btn-danger:hover {
-            background: linear-gradient(145deg, #ff3838, var(--accent-color));
+            background: linear-gradient(145deg, #ff4b2b, #ff416c);
             box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
         }
         
         .btn-purple {
-            background: linear-gradient(145deg, #9b59b6, #8e44ad);
+            background: linear-gradient(145deg, #8e2de2, #4a00e0);
             color: white;
         }
         
         .btn-purple:hover {
-            background: linear-gradient(145deg, #8e44ad, #9b59b6);
+            background: linear-gradient(145deg, #4a00e0, #8e2de2);
             box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
         }
         
@@ -894,7 +908,7 @@
         }
         
         .tab.active {
-            background: var(--primary-color);
+            background: linear-gradient(145deg, #6a11cb, #2575fc);
             color: white;
         }
         
@@ -934,7 +948,7 @@
         }
         
         .sound-btn:hover {
-            background: rgba(255, 107, 107, 0.7);
+            background: rgba(107, 17, 203, 0.7);
             transform: scale(1.1);
         }
         
@@ -1071,6 +1085,28 @@
             animation: tada 1s;
         }
         
+        /* CRB Button with counter */
+        .crb-btn-container {
+            position: relative;
+        }
+        
+        .crb-counter {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ff4757;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
         @media (max-width: 768px) {
             .game-title {
                 font-size: 3rem;
@@ -1135,7 +1171,7 @@
         }
     </style>
 </head>
-<body>
+<body class="game-bg">
     <div class="container">
         <header>
             <div class="title-silhouette">BOX BLAST</div>
@@ -1222,9 +1258,12 @@
                 <button class="btn-primary" id="start-game">
                     <i class="fas fa-play"></i> Mulai Permainan
                 </button>
-                <button class="btn-purple" id="crb-btn" style="display: none;">
-                    <i class="fas fa-lightbulb"></i> Gunakan CRB
-                </button>
+                <div class="crb-btn-container">
+                    <button class="btn-purple" id="crb-btn" style="display: none;">
+                        <i class="fas fa-lightbulb"></i> Gunakan CRB
+                    </button>
+                    <div class="crb-counter" id="crb-counter" style="display: none;">1</div>
+                </div>
                 <button class="btn-success" id="next-level-btn" style="display: none;">
                     <i class="fas fa-arrow-right"></i> Lanjut Level Berikutnya
                 </button>
@@ -1422,6 +1461,7 @@
         const selectionMessage = document.getElementById('selection-message');
         const startGameBtn = document.getElementById('start-game');
         const crbBtn = document.getElementById('crb-btn');
+        const crbCounter = document.getElementById('crb-counter');
         const nextLevelBtn = document.getElementById('next-level-btn');
         const cashoutBtn = document.getElementById('cashout-btn');
         const cashoutInfo = document.getElementById('cashout-info');
@@ -1479,6 +1519,9 @@
                     // Add active class to clicked tab and corresponding content
                     tab.classList.add('active');
                     document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+                    
+                    // Change background based on active tab
+                    document.body.className = `${tab.dataset.tab}-bg`;
                     
                     // Show game rules only in settings tab
                     if (tab.dataset.tab === 'settings') {
@@ -1561,13 +1604,14 @@
             // Generate sound effects using Web Audio API
             generateSounds();
             
-            // Set BGM properties - now using external file
+            // Set BGM properties
             sounds.bgm.loop = true;
             sounds.bgm.volume = gameState.bgmVolume / 100;
             
-            // Load external BGM file (replace with your own file path)
+            // Load external BGM file
             try {
-                sounds.bgm.src = 'https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-667.mp3'; // URL musik eksternal
+                // Using a free game music from Mixkit
+                sounds.bgm.src = 'https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-667.mp3';
                 sounds.bgm.load();
                 sounds.bgm.play().catch(e => {
                     console.log('External BGM failed, using generated BGM');
@@ -1996,10 +2040,12 @@
                 // Show CRB button if available and not final level
                 if (gameState.crbAvailable && !gameState.crbUsed && gameState.currentLevel < 12) {
                     crbBtn.style.display = 'block';
+                    crbCounter.style.display = 'flex';
                     crbInfo.style.display = 'flex';
                     crbText.textContent = 'CRB: 1 tersisa';
                 } else {
                     crbBtn.style.display = 'none';
+                    crbCounter.style.display = 'none';
                     if (gameState.crbUsed) {
                         crbInfo.style.display = 'flex';
                         crbText.textContent = 'CRB: Sudah digunakan';
@@ -2016,6 +2062,7 @@
                 cashoutBtn.style.display = 'none';
                 cashoutInfo.style.display = 'none';
                 crbBtn.style.display = 'none';
+                crbCounter.style.display = 'none';
                 crbInfo.style.display = 'none';
                 selectionInfo.style.display = 'none';
             }
